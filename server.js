@@ -36,18 +36,28 @@ app.get('/callback', async (req, res) => {
             return res.status(400).send('Authentication failed during token exchange.');
         }
 
+        // Fetch the user profile using the access token
         const userResponse = await fetch('https://discord.com/api/users/@me', {
             headers: { authorization: `Bearer ${accessToken}` },
         });
         
         const userData = await userResponse.json();
         
+        const userId = userData.id;
         const username = userData.username;
         const globalName = userData.global_name;
+        const avatarHash = userData.avatar;
 
-        console.log(`Successfully fetched user profile! Username: ${username}, Display Name: ${globalName}`);
+        console.log(`Successfully fetched user profile! ID: ${userId}, Username: ${username}`);
 
-        res.send(`Authentication complete! Welcome, ${globalName || username}. Check your logs.`);
+        // Send a detailed HTML response back to your browser
+        res.send(`
+            <h1>OAuth Successful!</h1>
+            <p><strong>Username:</strong> ${username}</p>
+            <p><strong>Display Name:</strong> ${globalName || 'None'}</p>
+            <p><strong>Discord ID (Snowflake):</strong> ${userId}</p>
+            <p>Check your Railway logs to see the raw data exchange!</p>
+        `);
     } catch (error) {
         console.error("Error during OAuth exchange:", error);
         res.status(500).send("Authentication failed due to an internal error.");
