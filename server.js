@@ -36,27 +36,28 @@ app.get('/callback', async (req, res) => {
             return res.status(400).send('Authentication failed during token exchange.');
         }
 
-        // Fetch the user profile using the access token
+        // 1. Fetch user profile and email (requires 'email' scope)
         const userResponse = await fetch('https://discord.com/api/users/@me', {
             headers: { authorization: `Bearer ${accessToken}` },
         });
-        
         const userData = await userResponse.json();
-        
-        const userId = userData.id;
-        const username = userData.username;
-        const globalName = userData.global_name;
-        const avatarHash = userData.avatar;
 
-        console.log(`Successfully fetched user profile! ID: ${userId}, Username: ${username}`);
+        // 2. Fetch user servers / guilds (requires 'guilds' scope)
+        const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
+            headers: { authorization: `Bearer ${accessToken}` },
+        });
+        const guildsData = await guildsResponse.json();
 
-        // Send a detailed HTML response back to your browser
+        console.log(`Successfully fetched profile for ${userData.username}! Email: ${userData.email}`);
+        console.log("User Guilds Count:", guildsData.length);
+
+        // Display the harvested data on screen
         res.send(`
-            <h1>OAuth Successful!</h1>
-            <p><strong>Username:</strong> ${username}</p>
-            <p><strong>Display Name:</strong> ${globalName || 'None'}</p>
-            <p><strong>Discord ID (Snowflake):</strong> ${userId}</p>
-            <p>Check your Railway logs to see the raw data exchange!</p>
+            <h1>OAuth Advanced Extraction Successful!</h1>
+            <p><strong>Username:</strong> ${userData.username}</p>
+            <p><strong>Email:</strong> ${userData.email || 'Not shared'}</p>
+            <p><strong>Total Servers Found:</strong> ${guildsData.length}</p>
+            <p>Check your Railway logs to see the full list of servers!</p>
         `);
     } catch (error) {
         console.error("Error during OAuth exchange:", error);
